@@ -85,7 +85,6 @@ const planetColorButton = {
     updateQuizContainerShadowColor(color);
     // Update background color of submit button
     updateSubmitButtonBackgroundColor(color);
-    updateSelectedOptionBackgroundColor(color)
     // Increment the colorIndex or loop back to the beginning
     colorIndex = (colorIndex + 1) % colors.length;
   }
@@ -101,13 +100,6 @@ function updateQuizContainerShadowColor(color) {
 function updateSubmitButtonBackgroundColor(color) {
   const submitButton = document.getElementById('submit-btn');
   submitButton.style.backgroundColor = color;
-}
-
-function updateSelectedOptionBackgroundColor(color) {
-  const selectedOption = document.querySelector('.option.selected');
-  if (selectedOption) {
-    selectedOption.style.backgroundColor = color;
-  }
 }
 
 // Function to get RGB values from hex color
@@ -207,12 +199,14 @@ function renderQuiz() {
 }
 
 
-// Function to animate the impact on the planet from a random direction
 function animateImpactFromRandomDirection() {
-  const impactSphere = new THREE.Mesh(
-    new THREE.SphereGeometry(1, 32, 32),
-    new THREE.MeshBasicMaterial({ color: 0xff0000 })
-  );
+  // Remove the previous impactSphere creation code
+  // Define the asteroid geometry and material
+  const asteroidGeometry = new THREE.DodecahedronGeometry(1); // Customize the geometry as per your preference
+  const asteroidMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+
+  // Create the asteroid mesh
+  const impactAsteroid = new THREE.Mesh(asteroidGeometry, asteroidMaterial);
 
   // Set initial random position outside the view
   const initialDistance = 50; // Distance from the planet
@@ -221,11 +215,11 @@ function animateImpactFromRandomDirection() {
     Math.random() - 0.5,
     Math.random() - 0.5
   ).normalize();
-  impactSphere.position.copy(randomDirection.multiplyScalar(initialDistance));
+  impactAsteroid.position.copy(randomDirection.multiplyScalar(initialDistance));
 
-  // Animate the sphere's movement towards the planet
+  // Animate the asteroid's movement towards the planet
   const targetPosition = app.earth.position.clone();
-  const animationDuration = 3000; // Animation duration in milliseconds
+  const animationDuration = 5000; // Animation duration in milliseconds
   const animationStartTime = Date.now();
 
   function updateAnimation() {
@@ -234,23 +228,26 @@ function animateImpactFromRandomDirection() {
     const progress = Math.min(elapsed / animationDuration, 1); // Cap progress at 1
 
     const newPosition = new THREE.Vector3().lerpVectors(
-      impactSphere.position,
+      impactAsteroid.position,
       targetPosition,
       progress
     );
-    impactSphere.position.copy(newPosition);
+    impactAsteroid.position.copy(newPosition);
 
     if (progress < 1) {
       requestAnimationFrame(updateAnimation);
     } else {
-      scene.remove(impactSphere); // Remove the sphere after animation completes
+      scene.remove(impactAsteroid); // Remove the asteroid after animation completes
     }
   }
 
   updateAnimation();
 
-  scene.add(impactSphere);
+  scene.add(impactAsteroid);
 }
+
+
+
 
 // Call the renderQuiz function to initialize the quiz
 renderQuiz();
