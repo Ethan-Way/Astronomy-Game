@@ -1,137 +1,240 @@
-// ThreeJS and Third-party deps
-import * as THREE from "three"
-import * as dat from 'dat.gui'
-import Stats from "three/examples/jsm/libs/stats.module"
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
+import * as THREE from "three";
+import * as dat from 'dat.gui';
+import Stats from "three/examples/jsm/libs/stats.module";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { createCamera, createRenderer, runApp, updateLoadingProgressBar } from "./core-utils";
+import { loadTexture } from "./common-utils";
+import worldgen_1 from "./assets/worldgen_1.gif";
+import worldgen_2 from "./assets/worldgen_2.gif";
+import worldgen_3 from "./assets/worldgen_3.gif";
+import worldgen_4 from './assets/worldgen_4.gif';
+import worldgen_5 from './assets/worldgen_5.gif';
 
-// Core boilerplate code deps
-import { createCamera, createRenderer, runApp, updateLoadingProgressBar } from "./core-utils"
+global.THREE = THREE;
+THREE.ColorManagement.enabled = true;
 
-// Other deps
-import { loadTexture } from "./common-utils"
-import Albedo from "./assets/Albedo.jpg"
-
-global.THREE = THREE
-// previously this feature is .legacyMode = false, see https://www.donmccurdy.com/2020/06/17/color-management-in-threejs/
-// turning this on has the benefit of doing certain automatic conversions (for hexadecimal and CSS colors from sRGB to linear-sRGB)
-THREE.ColorManagement.enabled = true
-
-/**************************************************
- * 0. Tweakable parameters for the scene
- *************************************************/
 const params = {
-  // general scene params
-  sunIntensity: 1.8, // brightness of the sun
-  speedFactor: 2.0, // rotation speed of the earth
-}
+  sunIntensity: 2, // brightness of the sun
+  speedFactor: 20, // rotation speed of the earth
+};
 
-
-/**************************************************
- * 1. Initialize core threejs components
- *************************************************/
 // Create the scene
-let scene = new THREE.Scene()
-
-// Create the renderer via 'createRenderer',
-// 1st param receives additional WebGLRenderer properties
-// 2nd param receives a custom callback to further configure the renderer
+let scene = new THREE.Scene();
 let renderer = createRenderer({ antialias: true }, (_renderer) => {
-  // best practice: ensure output colorspace is in sRGB, see Color Management documentation:
-  // https://threejs.org/docs/#manual/en/introduction/Color-management
-  _renderer.outputColorSpace = THREE.SRGBColorSpace
-})
+  _renderer.outputColorSpace = THREE.sRGBEncoding;
+});
 
 // Create the camera
-// Pass in fov, near, far and camera position respectively
-let camera = createCamera(45, 1, 1000, { x: 0, y: 0, z: 30 })
+let camera = createCamera(45, 1, 1000, { x: 0, y: 0, z: 30 });
 
-
-/**************************************************
- * 2. Build your scene in this threejs app
- * This app object needs to consist of at least the async initScene() function (it is async so the animate function can wait for initScene() to finish before being called)
- * initScene() is called after a basic threejs environment has been set up, you can add objects/lighting to you scene in initScene()
- * if your app needs to animate things(i.e. not static), include a updateScene(interval, elapsed) function in the app as well
- *************************************************/
 let app = {
   async initScene() {
     // OrbitControls
-    this.controls = new OrbitControls(camera, renderer.domElement)
-    this.controls.enableDamping = true
+    this.controls = new OrbitControls(camera, renderer.domElement);
+    this.controls.enableDamping = true;
 
     // adding a virtual sun using directional light
-    this.dirLight = new THREE.DirectionalLight(0xffffff, params.sunIntensity)
-    this.dirLight.position.set(-100, 100, 100)
-    scene.add(this.dirLight)
+    this.dirLight = new THREE.DirectionalLight(0xffffff, params.sunIntensity);
+    this.dirLight.position.set(-100, 100, 100);
+    scene.add(this.dirLight);
 
     // updates the progress bar to 10% on the loading UI
-    await updateLoadingProgressBar(0.1)
+    await updateLoadingProgressBar(0.1);
 
     // loads earth's color map, the basis of how our earth looks like
-    // const albedoMap = await loadTexture(Albedo)
-    // albedoMap.colorSpace = THREE.SRGBColorSpace
-    updateLoadingProgressBar(0.2)
+    const planetTexture = await loadTexture(worldgen_1);
+    planetTexture.encoding = THREE.sRGBEncoding; // Set texture encoding
+    await updateLoadingProgressBar(0.2);
 
     // create group for easier manipulation of objects(ie later with clouds and atmosphere added)
-    this.group = new THREE.Group()
+    this.group = new THREE.Group();
     // earth's axial tilt is 23.5 degrees
-    this.group.rotation.z = 23.5 / 360 * 2 * Math.PI
-    
-    let earthGeo = new THREE.SphereGeometry(10, 64, 64)
-    let earthMat = new THREE.MeshStandardMaterial({
-      color: 0xaaaaaa, // Set a basic color (light gray in this case)
-    })
-    this.earth = new THREE.Mesh(earthGeo, earthMat)
-    this.group.add(this.earth)
-    
-    // set initial rotational position of earth to get a good initial angle
-    this.earth.rotateY(-0.3)
+    this.group.rotation.z = 23.5 / 360 * 2 * Math.PI;
 
-    scene.add(this.group)
+    let earthGeo = new THREE.SphereGeometry(10, 64, 64);
+    let earthMat = new THREE.MeshStandardMaterial({
+      map: planetTexture,
+      color: '#8333FF'
+    });
+    earthMat.roughness = 1;
+    earthMat.metalness = 0.1;
+    this.earth = new THREE.Mesh(earthGeo, earthMat);
+    this.group.add(this.earth);
+
+    // set initial rotational position of earth to get a good initial angle
+    this.earth.rotateY(-0.3);
+
+    scene.add(this.group);
 
     // GUI controls
-    const gui = new dat.GUI()
-    gui.add(params, "sunIntensity", 0.0, 5.0, 0.1).onChange((val) => {
-      this.dirLight.intensity = val
-    }).name("Sun Intensity")
-    gui.add(params, "speedFactor", 0.1, 20.0, 0.1).name("Rotation Speed")
-
-    // Stats - show fps
-    this.stats1 = new Stats()
-    this.stats1.showPanel(0) // Panel 0 = fps
+    const gui = new dat.GUI();
+    this.stats1 = new Stats();
     this.stats1.domElement.style.cssText = "position:absolute;top:0px;left:0px;"
-    // this.container is the parent DOM element of the threejs canvas element
-    this.container.appendChild(this.stats1.domElement)
 
     // Add a button to change the color of the Earth
-    const earthColorButton = {
+    const colors = ['#8333FF', '#C80000', '#67D21F', '#1FD1D2', '#D2CA1F'];
+    let colorIndex = 1; // Track the current color index
+
+    // Add a button to change the color of the Earth
+    const planetColorButton = {
       ChangeColor: () => {
-        // Generate a random color
-        const randomColor = Math.random() * 0xffffff
-        // Set the color of the Earth mesh
-        this.earth.material.color.set(randomColor)
+        // Get the next color from the colors array
+        const color = colors[colorIndex];
+        // Set the Earth's material color to the next color
+        this.earth.material.color.set(color);
+        // Increment the colorIndex or loop back to the beginning
+        colorIndex = (colorIndex + 1) % colors.length;
       }
-    }
-    gui.add(earthColorButton, 'ChangeColor').name('Change Earth Color')
+    };
+    gui.add(planetColorButton, 'ChangeColor').name('Change Planet Color');
+
+    // Add a button to change the texture of the Earth
+    const textures = [worldgen_1, worldgen_2, worldgen_3, worldgen_4, worldgen_5]; // List of texture paths
+    let textureIndex = 0; // Track the current texture index
+
+    // Function to change the texture of the Earth in a circular manner
+    const changeTexture = async () => {
+      textureIndex = (textureIndex + 1) % textures.length;
+      const newTexture = await loadTexture(textures[textureIndex]);
+      this.earth.material.map = newTexture;
+      this.earth.material.needsUpdate = true;
+    };
+    gui.add({ ChangeTexture: changeTexture }, 'ChangeTexture').name('Change Planet Texture');
 
     await updateLoadingProgressBar(1.0, 100)
   },
+
   // @param {number} interval - time elapsed between 2 frames
   // @param {number} elapsed - total time elapsed since app start
   updateScene(interval, elapsed) {
-    this.controls.update()
-    this.stats1.update()
+    this.controls.update();
+    this.stats1.update();
 
     // use rotateY instead of rotation.y so as to rotate by axis Y local to each mesh
-    this.earth.rotateY(interval * 0.005 * params.speedFactor)
+    this.earth.rotateY(interval * 0.005 * params.speedFactor);
   }
+};
+
+// Define quiz data
+const quizData = [
+  {
+    question: "What is the capital of France?",
+    options: ["Paris", "London", "Berlin", "Rome"],
+    correctAnswer: "Paris"
+  },
+  {
+    question: "Which planet is known as the Red Planet?",
+    options: ["Venus", "Mars", "Jupiter", "Saturn"],
+    correctAnswer: "Mars"
+  },
+  // Add more quiz questions as needed
+];
+
+// Function to render the quiz
+function renderQuiz() {
+  const quizContainer = document.getElementById('quiz-container');
+  const questionElement = document.getElementById('question');
+  const optionsContainer = document.getElementById('options-container');
+  const submitButton = document.getElementById('submit-btn');
+  const resultElement = document.getElementById('result');
+
+  let currentQuestionIndex = 0;
+  let score = 0;
+
+  function showQuestion() {
+    const currentQuestion = quizData[currentQuestionIndex];
+    questionElement.textContent = currentQuestion.question;
+
+    optionsContainer.innerHTML = '';
+    currentQuestion.options.forEach((option, index) => {
+      const optionElement = document.createElement('div');
+      optionElement.classList.add('option');
+      optionElement.textContent = `${index + 1}. ${option}`;
+      optionElement.addEventListener('click', () => {
+        const selectedAnswer = currentQuestion.options[index];
+
+        // Remove 'selected' class from previously selected options
+        document.querySelectorAll('.option').forEach((el) => {
+          el.classList.remove('selected');
+        });
+
+        // Add 'selected' class to the clicked option
+        optionElement.classList.add('selected');
+
+        if (selectedAnswer === currentQuestion.correctAnswer) {
+          score++;
+        } else {
+          // Animate impact from a random direction
+          animateImpactFromRandomDirection();
+        }
+      });
+      optionsContainer.appendChild(optionElement);
+    });
+  }
+
+  function showResult() {
+    quizContainer.style.display = 'none';
+    resultElement.textContent = `You scored ${score} out of ${quizData.length}`;
+  }
+
+  submitButton.addEventListener('click', () => {
+    currentQuestionIndex++;
+    if (currentQuestionIndex < quizData.length) {
+      showQuestion();
+    } else {
+      showResult();
+    }
+  });
+
+  showQuestion();
 }
 
-/**************************************************
- * 3. Run the app
- * 'runApp' will do most of the boilerplate setup code for you:
- * e.g. HTML container, window resize listener, mouse move/touch listener for shader uniforms, THREE.Clock() for animation
- * Executing this line puts everything together and runs the app
- * ps. if you don't use custom shaders, pass undefined to the 'uniforms'(2nd-last) param
- * ps. if you don't use post-processing, pass undefined to the 'composer'(last) param
- *************************************************/
-runApp(app, scene, renderer, camera, true, undefined, undefined)
+// Function to animate the impact on the planet from a random direction
+function animateImpactFromRandomDirection() {
+  const impactSphere = new THREE.Mesh(
+    new THREE.SphereGeometry(1, 32, 32),
+    new THREE.MeshBasicMaterial({ color: 0xff0000 })
+  );
+
+  // Set initial random position outside the view
+  const initialDistance = 50; // Distance from the planet
+  const randomDirection = new THREE.Vector3(
+    Math.random() - 0.5,
+    Math.random() - 0.5,
+    Math.random() - 0.5
+  ).normalize();
+  impactSphere.position.copy(randomDirection.multiplyScalar(initialDistance));
+
+  // Animate the sphere's movement towards the planet
+  const targetPosition = app.earth.position.clone();
+  const animationDuration = 1000; // Animation duration in milliseconds
+  const animationStartTime = Date.now();
+
+  function updateAnimation() {
+    const currentTime = Date.now();
+    const elapsed = currentTime - animationStartTime;
+    const progress = Math.min(elapsed / animationDuration, 1); // Cap progress at 1
+
+    const newPosition = new THREE.Vector3().lerpVectors(
+      impactSphere.position,
+      targetPosition,
+      progress
+    );
+    impactSphere.position.copy(newPosition);
+
+    if (progress < 1) {
+      requestAnimationFrame(updateAnimation);
+    } else {
+      scene.remove(impactSphere); // Remove the sphere after animation completes
+    }
+  }
+
+  updateAnimation();
+
+  scene.add(impactSphere);
+}
+
+// Call the renderQuiz function to initialize the quiz
+renderQuiz();
+
+runApp(app, scene, renderer, camera, true, undefined, undefined);
