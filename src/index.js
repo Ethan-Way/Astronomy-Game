@@ -4,6 +4,7 @@ import Stats from "three/examples/jsm/libs/stats.module";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { createCamera, createRenderer, runApp, updateLoadingProgressBar } from "./core-utils";
 import { loadTexture } from "./common-utils";
+import { quizData } from "./quizQuestions";
 import worldgen_1 from "./assets/worldgen_1.gif";
 import worldgen_2 from "./assets/worldgen_2.gif";
 import worldgen_3 from "./assets/worldgen_3.gif";
@@ -25,7 +26,7 @@ let renderer = createRenderer({ antialias: true }, (_renderer) => {
 });
 
 // Create the camera
-let camera = createCamera(45, 1, 1000, { x: 0, y: 0, z: 30 });
+let camera = createCamera(45, 1, 1000, { x: 0, y: 0, z: 80 });
 
 let app = {
   async initScene() {
@@ -46,9 +47,7 @@ let app = {
     planetTexture.encoding = THREE.sRGBEncoding; // Set texture encoding
     await updateLoadingProgressBar(0.2);
 
-    // create group for easier manipulation of objects(ie later with clouds and atmosphere added)
     this.group = new THREE.Group();
-    // earth's axial tilt is 23.5 degrees
     this.group.rotation.z = 23.5 / 360 * 2 * Math.PI;
 
     let earthGeo = new THREE.SphereGeometry(10, 64, 64);
@@ -75,18 +74,47 @@ let app = {
     const colors = ['#8333FF', '#C80000', '#67D21F', '#1FD1D2', '#D2CA1F'];
     let colorIndex = 1; // Track the current color index
 
-    // Add a button to change the color of the Earth
-    const planetColorButton = {
-      ChangeColor: () => {
-        // Get the next color from the colors array
-        const color = colors[colorIndex];
-        // Set the Earth's material color to the next color
-        this.earth.material.color.set(color);
-        // Increment the colorIndex or loop back to the beginning
-        colorIndex = (colorIndex + 1) % colors.length;
-      }
-    };
-    gui.add(planetColorButton, 'ChangeColor').name('Change Planet Color');
+// Add a button to change the color of the Earth
+const planetColorButton = {
+  ChangeColor: () => {
+    // Get the next color from the colors array
+    const color = colors[colorIndex];
+    // Set the Earth's material color to the next color
+    this.earth.material.color.set(color);
+    // Update shadow color of quiz container
+    updateQuizContainerShadowColor(color);
+    // Update background color of submit button
+    updateSubmitButtonBackgroundColor(color);
+    updateSelectedOptionBackgroundColor(color)
+    // Increment the colorIndex or loop back to the beginning
+    colorIndex = (colorIndex + 1) % colors.length;
+  }
+};
+gui.add(planetColorButton, 'ChangeColor').name('Change Planet Color');
+
+// Function to update the shadow color of the quiz container
+function updateQuizContainerShadowColor(color) {
+  const quizContainer = document.getElementById('quiz-container');
+  quizContainer.style.boxShadow = `0 0 10px rgba(${getRGBValues(color)}, 0.8)`;
+}
+
+function updateSubmitButtonBackgroundColor(color) {
+  const submitButton = document.getElementById('submit-btn');
+  submitButton.style.backgroundColor = color;
+}
+
+function updateSelectedOptionBackgroundColor(color) {
+  const selectedOption = document.querySelector('.option.selected');
+  if (selectedOption) {
+    selectedOption.style.backgroundColor = color;
+  }
+}
+
+// Function to get RGB values from hex color
+function getRGBValues(hex) {
+  const hexValue = hex.replace('#', '');
+  return `${parseInt(hexValue.substring(0, 2), 16)}, ${parseInt(hexValue.substring(2, 4), 16)}, ${parseInt(hexValue.substring(4, 6), 16)}`;
+}
 
     // Add a button to change the texture of the Earth
     const textures = [worldgen_1, worldgen_2, worldgen_3, worldgen_4, worldgen_5]; // List of texture paths
@@ -114,21 +142,6 @@ let app = {
     this.earth.rotateY(interval * 0.005 * params.speedFactor);
   }
 };
-
-// Define quiz data
-const quizData = [
-  {
-    question: "What is the capital of France?",
-    options: ["Paris", "London", "Berlin", "Rome"],
-    correctAnswer: "Paris"
-  },
-  {
-    question: "Which planet is known as the Red Planet?",
-    options: ["Venus", "Mars", "Jupiter", "Saturn"],
-    correctAnswer: "Mars"
-  },
-  // Add more quiz questions as needed
-];
 
 // Function to render the quiz
 function renderQuiz() {
@@ -161,12 +174,8 @@ function renderQuiz() {
         // Add 'selected' class to the clicked option
         optionElement.classList.add('selected');
 
-        if (selectedAnswer === currentQuestion.correctAnswer) {
-          score++;
-        } else {
-          // Animate impact from a random direction
-          animateImpactFromRandomDirection();
-        }
+        // Store the selected answer for checking upon submit
+        optionElement.dataset.selectedAnswer = selectedAnswer;
       });
       optionsContainer.appendChild(optionElement);
     });
@@ -178,6 +187,14 @@ function renderQuiz() {
   }
 
   submitButton.addEventListener('click', () => {
+    // Get the selected answer from the last clicked option
+    const selectedAnswer = optionsContainer.querySelector('.option.selected')?.dataset.selectedAnswer;
+
+    if (selectedAnswer && selectedAnswer !== quizData[currentQuestionIndex].correctAnswer) {
+      // Animate impact from a random direction only for wrong answers
+      animateImpactFromRandomDirection();
+    }
+
     currentQuestionIndex++;
     if (currentQuestionIndex < quizData.length) {
       showQuestion();
@@ -188,6 +205,7 @@ function renderQuiz() {
 
   showQuestion();
 }
+
 
 // Function to animate the impact on the planet from a random direction
 function animateImpactFromRandomDirection() {
@@ -207,7 +225,7 @@ function animateImpactFromRandomDirection() {
 
   // Animate the sphere's movement towards the planet
   const targetPosition = app.earth.position.clone();
-  const animationDuration = 1000; // Animation duration in milliseconds
+  const animationDuration = 3000; // Animation duration in milliseconds
   const animationStartTime = Date.now();
 
   function updateAnimation() {

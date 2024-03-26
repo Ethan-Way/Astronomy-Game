@@ -87,52 +87,37 @@
       padding-left: 1rem;
     }
 
-    #planet-name-container {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-    }
-
-    #planet-name-input {
-      width: 150px;
-      padding: 5px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      font-size: 14px;
-      outline: none;
-    }
-
     #quiz-container {
       position: absolute;
       bottom: 20px;
       left: 20px;
-      background-color: rgba(255, 255, 255, 0.8);
+      background-color: rgba(0, 0, 0, 0.8);
       padding: 20px;
       border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 0 10px rgba(131, 51, 255);
     }
 
     .option {
       margin-bottom: 10px;
       cursor: pointer;
       padding: 10px;
+      color: #FFFFFF;
       /* Add padding for better click area */
       transition: background-color 0.3s ease;
       /* Smooth transition for highlighting */
     }
 
     .option.selected {
-      background-color: #4CAF50;
+      background-color: #8333FF;
       /* Green color for selected answer */
       color: #FFFFFF;
       /* White text on selected answer */
     }
 
-
     #submit-btn {
       margin-top: 10px;
       padding: 5px 10px;
-      background-color: #337ab7;
+      background-color: #8333FF;
       color: #fff;
       border: none;
       border-radius: 5px;
@@ -140,6 +125,10 @@
     }
 
     #quiz-text {
+      color: #FFFFFF;
+    }
+
+    #question {
       color: #FFFFFF;
     }
   </style>
@@ -153,11 +142,11 @@
     </div>
   </div>
   <script src="./index.js" type="module"></script>
-  <div id="quiz-container">
+  <div id="quiz-container" class="quiz-container">
     <h2 id="quiz-text">Quiz</h2>
     <p id="question"></p>
-    <div id="options-container"></div>
-    <button id="submit-btn">Submit</button>
+    <div id="options-container" class="options-container"></div>
+    <button id="submit-btn" class="submit-btn">Submit</button>
     <p id="result"></p>
   </div>
 </body>
