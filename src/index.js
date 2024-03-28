@@ -173,7 +173,7 @@ function renderQuiz() {
     app.group.remove(app.planet);
 
     // Create planet shattering animation
-    const particleCount = 500; // Number of particles
+    const particleCount = 1000; // Number of particles
     const particleGeometry = new THREE.SphereGeometry(0.2, 8, 8); // Particle geometry
 
     const particles = new THREE.Group(); // Group to hold particles
