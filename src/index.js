@@ -10,13 +10,14 @@ import worldgen_2 from "./assets/worldgen_2.gif";
 import worldgen_3 from "./assets/worldgen_3.gif";
 import worldgen_4 from './assets/worldgen_4.gif';
 import worldgen_5 from './assets/worldgen_5.gif';
+import asteroid from './assets/asteroid.jpg'
 
 global.THREE = THREE;
 THREE.ColorManagement.enabled = true;
 
 const params = {
   sunIntensity: 2, // brightness of the sun
-  speedFactor: 20, // rotation speed of the earth
+  speedFactor: 20, // rotation speed
 };
 
 // Create the scene
@@ -42,7 +43,6 @@ let app = {
     // updates the progress bar to 10% on the loading UI
     await updateLoadingProgressBar(0.1);
 
-    // loads earth's color map, the basis of how our earth looks like
     const planetTexture = await loadTexture(worldgen_1);
     planetTexture.encoding = THREE.sRGBEncoding; // Set texture encoding
     await updateLoadingProgressBar(0.2);
@@ -50,18 +50,17 @@ let app = {
     this.group = new THREE.Group();
     this.group.rotation.z = 23.5 / 360 * 2 * Math.PI;
 
-    let earthGeo = new THREE.SphereGeometry(10, 64, 64);
-    let earthMat = new THREE.MeshStandardMaterial({
+    let planetGeo = new THREE.SphereGeometry(10, 64, 64);
+    let planetMaterial = new THREE.MeshStandardMaterial({
       map: planetTexture,
       color: '#8333FF'
     });
-    earthMat.roughness = 1;
-    earthMat.metalness = 0.1;
-    this.earth = new THREE.Mesh(earthGeo, earthMat);
-    this.group.add(this.earth);
+    planetMaterial.roughness = 1;
+    planetMaterial.metalness = 0.1;
+    this.planet = new THREE.Mesh(planetGeo, planetMaterial);
+    this.group.add(this.planet);
 
-    // set initial rotational position of earth to get a good initial angle
-    this.earth.rotateY(-0.3);
+    this.planet.rotateY(-0.3);
 
     scene.add(this.group);
 
@@ -70,54 +69,47 @@ let app = {
     this.stats1 = new Stats();
     this.stats1.domElement.style.cssText = "position:absolute;top:0px;left:0px;"
 
-    // Add a button to change the color of the Earth
     const colors = ['#8333FF', '#C80000', '#67D21F', '#1FD1D2', '#D2CA1F'];
     let colorIndex = 1; // Track the current color index
 
-// Add a button to change the color of the Earth
-const planetColorButton = {
-  ChangeColor: () => {
-    // Get the next color from the colors array
-    const color = colors[colorIndex];
-    // Set the Earth's material color to the next color
-    this.earth.material.color.set(color);
-    // Update shadow color of quiz container
-    updateQuizContainerShadowColor(color);
-    // Update background color of submit button
-    updateSubmitButtonBackgroundColor(color);
-    // Increment the colorIndex or loop back to the beginning
-    colorIndex = (colorIndex + 1) % colors.length;
-  }
-};
-gui.add(planetColorButton, 'ChangeColor').name('Change Planet Color');
+    // Add a button to change the color of the planet
+    const planetColorButton = {
+      ChangeColor: () => {
+        const color = colors[colorIndex];
+        this.planet.material.color.set(color);
+        updateQuizContainerShadowColor(color);
+        updateSubmitButtonBackgroundColor(color);
+        colorIndex = (colorIndex + 1) % colors.length;
+      }
+    };
+    gui.add(planetColorButton, 'ChangeColor').name('Change Planet Color');
 
-// Function to update the shadow color of the quiz container
-function updateQuizContainerShadowColor(color) {
-  const quizContainer = document.getElementById('quiz-container');
-  quizContainer.style.boxShadow = `0 0 10px rgba(${getRGBValues(color)}, 0.8)`;
-}
+    // Function to update the shadow color of the quiz container
+    function updateQuizContainerShadowColor(color) {
+      const quizContainer = document.getElementById('quiz-container');
+      quizContainer.style.boxShadow = `0 0 10px rgba(${getRGBValues(color)}, 0.8)`;
+    }
 
-function updateSubmitButtonBackgroundColor(color) {
-  const submitButton = document.getElementById('submit-btn');
-  submitButton.style.backgroundColor = color;
-}
+    function updateSubmitButtonBackgroundColor(color) {
+      const submitButton = document.getElementById('submit-btn');
+      submitButton.style.backgroundColor = color;
+    }
 
-// Function to get RGB values from hex color
-function getRGBValues(hex) {
-  const hexValue = hex.replace('#', '');
-  return `${parseInt(hexValue.substring(0, 2), 16)}, ${parseInt(hexValue.substring(2, 4), 16)}, ${parseInt(hexValue.substring(4, 6), 16)}`;
-}
+    // Function to get RGB values from hex color
+    function getRGBValues(hex) {
+      const hexValue = hex.replace('#', '');
+      return `${parseInt(hexValue.substring(0, 2), 16)}, ${parseInt(hexValue.substring(2, 4), 16)}, ${parseInt(hexValue.substring(4, 6), 16)}`;
+    }
 
-    // Add a button to change the texture of the Earth
-    const textures = [worldgen_1, worldgen_2, worldgen_3, worldgen_4, worldgen_5]; // List of texture paths
-    let textureIndex = 0; // Track the current texture index
+    // Add a button to change the texture of the planet
+    const textures = [worldgen_1, worldgen_2, worldgen_3, worldgen_4, worldgen_5];
+    let textureIndex = 0;
 
-    // Function to change the texture of the Earth in a circular manner
     const changeTexture = async () => {
       textureIndex = (textureIndex + 1) % textures.length;
       const newTexture = await loadTexture(textures[textureIndex]);
-      this.earth.material.map = newTexture;
-      this.earth.material.needsUpdate = true;
+      this.planet.material.map = newTexture;
+      this.planet.material.needsUpdate = true;
     };
     gui.add({ ChangeTexture: changeTexture }, 'ChangeTexture').name('Change Planet Texture');
 
@@ -131,7 +123,7 @@ function getRGBValues(hex) {
     this.stats1.update();
 
     // use rotateY instead of rotation.y so as to rotate by axis Y local to each mesh
-    this.earth.rotateY(interval * 0.005 * params.speedFactor);
+    this.planet.rotateY(interval * 0.005 * params.speedFactor);
   }
 };
 
@@ -158,15 +150,12 @@ function renderQuiz() {
       optionElement.addEventListener('click', () => {
         const selectedAnswer = currentQuestion.options[index];
 
-        // Remove 'selected' class from previously selected options
         document.querySelectorAll('.option').forEach((el) => {
           el.classList.remove('selected');
         });
 
-        // Add 'selected' class to the clicked option
         optionElement.classList.add('selected');
 
-        // Store the selected answer for checking upon submit
         optionElement.dataset.selectedAnswer = selectedAnswer;
       });
       optionsContainer.appendChild(optionElement);
@@ -179,11 +168,9 @@ function renderQuiz() {
   }
 
   submitButton.addEventListener('click', () => {
-    // Get the selected answer from the last clicked option
     const selectedAnswer = optionsContainer.querySelector('.option.selected')?.dataset.selectedAnswer;
 
     if (selectedAnswer && selectedAnswer !== quizData[currentQuestionIndex].correctAnswer) {
-      // Animate impact from a random direction only for wrong answers
       animateImpactFromRandomDirection();
     }
 
@@ -198,17 +185,17 @@ function renderQuiz() {
   showQuestion();
 }
 
-
-function animateImpactFromRandomDirection() {
-  // Remove the previous impactSphere creation code
-  // Define the asteroid geometry and material
-  const asteroidGeometry = new THREE.DodecahedronGeometry(1); // Customize the geometry as per your preference
-  const asteroidMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+// Function for Asteroid
+async function animateImpactFromRandomDirection() {
+  const asteroidRadius = Math.random() * (3 - .5) + .5;
+  const asteroidGeometry = new THREE.SphereGeometry(asteroidRadius, 32, 32);
+  const asteroidMaterial = new THREE.MeshStandardMaterial({
+    map: await loadTexture(asteroid),
+  });
 
   // Create the asteroid mesh
   const impactAsteroid = new THREE.Mesh(asteroidGeometry, asteroidMaterial);
 
-  // Set initial random position outside the view
   const initialDistance = 50; // Distance from the planet
   const randomDirection = new THREE.Vector3(
     Math.random() - 0.5,
@@ -217,15 +204,14 @@ function animateImpactFromRandomDirection() {
   ).normalize();
   impactAsteroid.position.copy(randomDirection.multiplyScalar(initialDistance));
 
-  // Animate the asteroid's movement towards the planet
-  const targetPosition = app.earth.position.clone();
-  const animationDuration = 5000; // Animation duration in milliseconds
+  const targetPosition = app.planet.position.clone();
+  const animationDuration = 15000; // Animation duration in milliseconds
   const animationStartTime = Date.now();
 
   function updateAnimation() {
     const currentTime = Date.now();
     const elapsed = currentTime - animationStartTime;
-    const progress = Math.min(elapsed / animationDuration, 1); // Cap progress at 1
+    const progress = Math.min(elapsed / animationDuration, 1);
 
     const newPosition = new THREE.Vector3().lerpVectors(
       impactAsteroid.position,
@@ -234,10 +220,13 @@ function animateImpactFromRandomDirection() {
     );
     impactAsteroid.position.copy(newPosition);
 
+    // Rotate the asteroid around its own axis
+    impactAsteroid.rotation.y += .1; //
+
     if (progress < 1) {
       requestAnimationFrame(updateAnimation);
     } else {
-      scene.remove(impactAsteroid); // Remove the asteroid after animation completes
+      scene.remove(impactAsteroid);
     }
   }
 
@@ -247,9 +236,6 @@ function animateImpactFromRandomDirection() {
 }
 
 
-
-
-// Call the renderQuiz function to initialize the quiz
 renderQuiz();
 
 runApp(app, scene, renderer, camera, true, undefined, undefined);
