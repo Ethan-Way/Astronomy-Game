@@ -137,6 +137,8 @@ function renderQuiz() {
 
   let currentQuestionIndex = 0;
   let score = 0;
+  let asteroidCounter = 1;
+  let wrongCounter = 0;
 
   function showQuestion() {
     const currentQuestion = quizData[currentQuestionIndex];
@@ -162,17 +164,99 @@ function renderQuiz() {
     });
   }
 
-  function showResult() {
-    quizContainer.style.display = 'none';
-    resultElement.textContent = `You scored ${score} out of ${quizData.length}`;
+  async function showResult() {
+    const quizContainer = document.getElementById('quiz-container');
+    quizContainer.remove();
+
+    await delay(2500)
+    // Remove the planet from the scene
+    app.group.remove(app.planet);
+
+    // Create planet shattering animation
+    const particleCount = 500; // Number of particles
+    const particleGeometry = new THREE.SphereGeometry(0.2, 8, 8); // Particle geometry
+
+    const particles = new THREE.Group(); // Group to hold particles
+
+    // Set particle color to match the planet color
+    const planetColor = app.planet.material.color.clone();
+
+    for (let i = 0; i < particleCount; i++) {
+      const particleMaterial = new THREE.MeshBasicMaterial({ color: planetColor });
+      const particle = new THREE.Mesh(particleGeometry, particleMaterial);
+      particle.position.copy(app.planet.position);
+      particles.add(particle);
+
+      // Randomize particle velocity
+      const velocity = new THREE.Vector3(
+        Math.random() * 10 - 5,
+        Math.random() * 10 - 5,
+        Math.random() * 10 - 5
+      );
+      particle.userData.velocity = velocity;
+    }
+
+    scene.add(particles);
+
+    // Animation parameters
+    const explosionDuration = 2000; // in milliseconds
+    const explosionStartTime = Date.now();
+
+    // Animation function
+    function animatePlanetShatter() {
+      const currentTime = Date.now();
+      const elapsed = currentTime - explosionStartTime;
+      const progress = Math.min(elapsed / explosionDuration, 1);
+
+      particles.children.forEach(particle => {
+        // Move particles based on their velocities
+        particle.position.add(particle.userData.velocity);
+        particle.userData.velocity.multiplyScalar(0.98); // Slow down particles
+        particle.material.opacity = 1 - progress; // Fade out particles
+      });
+
+      if (progress < 1) {
+        requestAnimationFrame(animatePlanetShatter);
+      } else {
+        scene.remove(particles);
+      }
+    }
+    // Start the planet shattering animation
+    animatePlanetShatter();
+    
+    await delay(2000)
+
+    const resultOverlay = document.createElement('div');
+    resultOverlay.classList.add('result-overlay');
+    resultOverlay.innerHTML = '<h1>You Lost</h1>';
+    document.body.appendChild(resultOverlay);
   }
 
-  submitButton.addEventListener('click', () => {
+
+  function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  submitButton.addEventListener('click', async () => {
     const selectedAnswer = optionsContainer.querySelector('.option.selected')?.dataset.selectedAnswer;
 
     if (selectedAnswer && selectedAnswer !== quizData[currentQuestionIndex].correctAnswer) {
-      animateImpactFromRandomDirection();
+      for (let i = 0; i < asteroidCounter; i++) {
+        await delay(500);
+        animateImpactFromRandomDirection();
+      }
+
+      asteroidCounter++;
+      wrongCounter++;
+
+      await delay(1500)
+
+      if (wrongCounter === 1) {
+        showResult();
+        return
+      }
     }
+
 
     currentQuestionIndex++;
     if (currentQuestionIndex < quizData.length) {
@@ -196,7 +280,7 @@ async function animateImpactFromRandomDirection() {
   // Create the asteroid mesh
   const impactAsteroid = new THREE.Mesh(asteroidGeometry, asteroidMaterial);
 
-  const initialDistance = 50; // Distance from the planet
+  const initialDistance = 100; // Distance from the planet
   const randomDirection = new THREE.Vector3(
     Math.random() - 0.5,
     Math.random() - 0.5,
@@ -205,7 +289,7 @@ async function animateImpactFromRandomDirection() {
   impactAsteroid.position.copy(randomDirection.multiplyScalar(initialDistance));
 
   const targetPosition = app.planet.position.clone();
-  const animationDuration = 15000; // Animation duration in milliseconds
+  const animationDuration = 3750; // Animation duration in milliseconds
   const animationStartTime = Date.now();
 
   function updateAnimation() {
