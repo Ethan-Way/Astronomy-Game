@@ -172,9 +172,8 @@ function renderQuiz() {
     // Remove the planet from the scene
     app.group.remove(app.planet);
 
-    // Create planet shattering animation
-    const particleCount = 1000; // Number of particles
-    const particleGeometry = new THREE.SphereGeometry(0.2, 8, 8); // Particle geometry
+    const particleCount = 1000;
+    const particleGeometry = new THREE.SphereGeometry(0.2, 8, 8);
 
     const particles = new THREE.Group(); // Group to hold particles
 
@@ -209,7 +208,6 @@ function renderQuiz() {
       const progress = Math.min(elapsed / explosionDuration, 1);
 
       particles.children.forEach(particle => {
-        // Move particles based on their velocities
         particle.position.add(particle.userData.velocity);
         particle.userData.velocity.multiplyScalar(0.98); // Slow down particles
         particle.material.opacity = 1 - progress; // Fade out particles
@@ -217,13 +215,10 @@ function renderQuiz() {
 
       if (progress < 1) {
         requestAnimationFrame(animatePlanetShatter);
-      } else {
-        scene.remove(particles);
       }
     }
-    // Start the planet shattering animation
     animatePlanetShatter();
-    
+
     await delay(2000)
 
     const resultOverlay = document.createElement('div');
@@ -231,7 +226,6 @@ function renderQuiz() {
     resultOverlay.innerHTML = '<h1>You Lost</h1>';
     document.body.appendChild(resultOverlay);
   }
-
 
   function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -256,7 +250,6 @@ function renderQuiz() {
         return
       }
     }
-
 
     currentQuestionIndex++;
     if (currentQuestionIndex < quizData.length) {
