@@ -127,6 +127,14 @@ let app = {
   }
 };
 
+function shuffleArray(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
 // Function to render the quiz
 function renderQuiz() {
   const quizContainer = document.getElementById('quiz-container');
@@ -134,14 +142,18 @@ function renderQuiz() {
   const optionsContainer = document.getElementById('options-container');
   const submitButton = document.getElementById('submit-btn');
   const resultElement = document.getElementById('result');
+  const scoreElement = document.getElementById('score'); // Add score element
 
   let currentQuestionIndex = 0;
-  let score = 0;
+  let score = 0; // Initialize score counter
   let asteroidCounter = 1;
   let wrongCounter = 0;
 
+  // Shuffle the quizData array before displaying questions
+  const shuffledQuizData = shuffleArray(quizData);
+
   function showQuestion() {
-    const currentQuestion = quizData[currentQuestionIndex];
+    const currentQuestion = shuffledQuizData[currentQuestionIndex];
     questionElement.textContent = currentQuestion.question;
 
     optionsContainer.innerHTML = '';
@@ -166,6 +178,7 @@ function renderQuiz() {
 
   async function showResult() {
     const quizContainer = document.getElementById('quiz-container');
+    const scoreElement = document.getElementById('score');
     quizContainer.remove();
 
     await delay(2500)
@@ -223,7 +236,7 @@ function renderQuiz() {
 
     const resultOverlay = document.createElement('div');
     resultOverlay.classList.add('result-overlay');
-    resultOverlay.innerHTML = '<h1>You Lost</h1>';
+    resultOverlay.innerHTML = `<div><h1>You Lost</h1><br><h1>Your Score: ${score}</h1></div>`;
     document.body.appendChild(resultOverlay);
   }
 
@@ -245,11 +258,15 @@ function renderQuiz() {
 
       await delay(1500)
 
-      if (wrongCounter === 1) {
+      if (wrongCounter === 3) {
         showResult();
         return
       }
+    } else {
+      score++; // Increment score for correct answer
     }
+
+    scoreElement.textContent = `Score: ${score}`; // Update score display
 
     currentQuestionIndex++;
     if (currentQuestionIndex < quizData.length) {
@@ -261,6 +278,7 @@ function renderQuiz() {
 
   showQuestion();
 }
+
 
 // Function for Asteroid
 async function animateImpactFromRandomDirection() {
