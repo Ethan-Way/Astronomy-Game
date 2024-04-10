@@ -300,7 +300,9 @@ async function animateImpactFromRandomDirection() {
   impactAsteroid.position.copy(randomDirection.multiplyScalar(initialDistance));
 
   const targetPosition = app.planet.position.clone();
-  const animationDuration = 3750; // Animation duration in milliseconds
+  const asteroidDirection = targetPosition.clone().sub(impactAsteroid.position).normalize();
+
+  const animationDuration = 1500; // Animation duration in milliseconds
   const animationStartTime = Date.now();
 
   function updateAnimation() {
@@ -322,6 +324,57 @@ async function animateImpactFromRandomDirection() {
       requestAnimationFrame(updateAnimation);
     } else {
       scene.remove(impactAsteroid);
+
+      // Create particles for explosion at impact position
+      const particleCount = 200;
+      const particleGeometry = new THREE.SphereGeometry(0.2, 8, 8);
+      const particleMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff }); // Use white color for particles
+      const particles = new THREE.Group(); // Group to hold particles
+
+      const coneAngle = Math.PI / 4; // Angle for cone shape
+
+      const oppositeDirection = asteroidDirection.clone().negate(); // Calculate opposite direction
+
+      for (let i = 0; i < particleCount; i++) {
+        const particle = new THREE.Mesh(particleGeometry, particleMaterial);
+        particle.position.copy(impactAsteroid.position);
+        particles.add(particle);
+
+        // Calculate random direction within cone angle
+        const randomAngle = Math.random() * coneAngle;
+        const randomDirection = oppositeDirection.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), randomAngle);
+
+        // Randomize particle velocity within cone direction
+        const velocityMagnitude = Math.random() * 2 + 1; // Random velocity magnitude
+        const velocity = randomDirection.multiplyScalar(velocityMagnitude);
+        particle.userData.velocity = velocity;
+      }
+
+      scene.add(particles);
+
+      // Animation parameters for explosion
+      const explosionDuration = 10000; // in milliseconds
+      const explosionStartTime = Date.now();
+
+      // Animation function for explosion
+      function animateExplosion() {
+        const currentTime = Date.now();
+        const elapsed = currentTime - explosionStartTime;
+        const progress = Math.min(elapsed / explosionDuration, 1);
+
+        particles.children.forEach(particle => {
+          particle.position.add(particle.userData.velocity);
+          particle.userData.velocity.multiplyScalar(0.98); // Slow down particles
+          particle.material.opacity = 1 - progress; // Fade out particles
+        });
+
+        if (progress < 1) {
+          requestAnimationFrame(animateExplosion);
+        } else {
+          scene.remove(particles);
+        }
+      }
+      animateExplosion();
     }
   }
 
@@ -329,6 +382,9 @@ async function animateImpactFromRandomDirection() {
 
   scene.add(impactAsteroid);
 }
+
+
+
 
 
 renderQuiz();
