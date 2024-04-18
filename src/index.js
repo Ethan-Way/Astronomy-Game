@@ -20,6 +20,17 @@ const params = {
   speedFactor: 20, // rotation speed
 };
 
+const particleGeometries = [
+  new THREE.BoxGeometry(0.2, 0.2, 0.2),  // Cube geometry
+  new THREE.ConeGeometry(0.2, 0.5, 8),   // Cone geometry
+  new THREE.CylinderGeometry(0.2, 0.2, 0.5, 8),  // Cylinder geometry
+  new THREE.DodecahedronGeometry(0.2),  // Dodecahedron geometry
+  new THREE.IcosahedronGeometry(0.2),   // Icosahedron geometry
+  new THREE.TetrahedronGeometry(0.2),   // Tetrahedron geometry
+  new THREE.SphereGeometry(0.2, 16, 16),  // Sphere geometry
+  new THREE.CylinderGeometry(0.2, 0, 0.5, 8),  // Cone-shaped cylinder geometry
+];
+
 // Create the scene
 let scene = new THREE.Scene();
 let renderer = createRenderer({ antialias: true }, (_renderer) => {
@@ -245,6 +256,7 @@ function renderQuiz() {
   }
 
   submitButton.addEventListener('click', async () => {
+    submitButton.disabled = true;
     const selectedAnswer = optionsContainer.querySelector('.option.selected')?.dataset.selectedAnswer;
 
     if (selectedAnswer && selectedAnswer !== quizData[currentQuestionIndex].correctAnswer) {
@@ -257,12 +269,14 @@ function renderQuiz() {
       wrongCounter++;
 
       await delay(1500)
+      submitButton.disabled = false
 
       if (wrongCounter === 3) {
         showResult();
         return
       }
     } else {
+      submitButton.disabled = false
       score++; // Increment score for correct answer
     }
 
@@ -275,14 +289,18 @@ function renderQuiz() {
       showResult();
     }
   });
-
   showQuestion();
 }
 
+function getRandomColor() {
+  const minGrey = 0x111111; // Minimum grey value (dark grey)
+  const maxGrey = 0xEEEEEE; // Maximum grey value (light grey)
+  const randomGrey = Math.random() * (maxGrey - minGrey) + minGrey;
+  return new THREE.Color(randomGrey, randomGrey, randomGrey);}
 
 // Function for Asteroid
 async function animateImpactFromRandomDirection() {
-  const asteroidRadius = Math.random() * (3 - .5) + .5;
+  const asteroidRadius = Math.random() * (3 - 0.5) + 0.5;
   const asteroidGeometry = new THREE.SphereGeometry(asteroidRadius, 32, 32);
   const asteroidMaterial = new THREE.MeshStandardMaterial({
     map: await loadTexture(asteroid),
@@ -318,7 +336,7 @@ async function animateImpactFromRandomDirection() {
     impactAsteroid.position.copy(newPosition);
 
     // Rotate the asteroid around its own axis
-    impactAsteroid.rotation.y += .1; //
+    impactAsteroid.rotation.y += 0.1; //
 
     if (progress < 1) {
       requestAnimationFrame(updateAnimation);
@@ -327,17 +345,24 @@ async function animateImpactFromRandomDirection() {
 
       // Create particles for explosion at impact position
       const particleCount = 200;
-      const particleGeometry = new THREE.SphereGeometry(0.2, 8, 8);
-      const particleMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff }); // Use white color for particles
       const particles = new THREE.Group(); // Group to hold particles
-
-      const coneAngle = Math.PI / 4; // Angle for cone shape
-
+      const coneAngle = Math.PI / 3; // Angle for cone shape
       const oppositeDirection = asteroidDirection.clone().negate(); // Calculate opposite direction
+      const minOffset = -5; // Minimum offset from impact point
+      const maxOffset = 5; // Maximum offset from impact point
 
       for (let i = 0; i < particleCount; i++) {
+        const particleGeometry = particleGeometries[Math.floor(Math.random() * particleGeometries.length)];
+        const particleMaterial = new THREE.MeshBasicMaterial({ color: getRandomColor(), transparent: true });
+        
         const particle = new THREE.Mesh(particleGeometry, particleMaterial);
-        particle.position.copy(impactAsteroid.position);
+
+        // Randomize initial position within offset range
+        const offsetX = Math.random() * (maxOffset - minOffset) + minOffset;
+        const offsetY = Math.random() * (maxOffset - minOffset) + minOffset;
+        const offsetZ = Math.random() * (maxOffset - minOffset) + minOffset;
+
+        particle.position.copy(impactAsteroid.position).add(new THREE.Vector3(offsetX, offsetY, offsetZ));
         particles.add(particle);
 
         // Calculate random direction within cone angle
@@ -382,10 +407,6 @@ async function animateImpactFromRandomDirection() {
 
   scene.add(impactAsteroid);
 }
-
-
-
-
 
 renderQuiz();
 
