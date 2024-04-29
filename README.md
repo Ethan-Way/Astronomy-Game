@@ -29,4 +29,4 @@ In conclusion, the interactive astronomy quiz with planet destruction simulation
 ### How to run locally
 
 1. npm i
-2. make dev
+2. npm run start
