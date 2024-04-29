@@ -344,7 +344,7 @@ async function animateImpactFromRandomDirection() {
       scene.remove(impactAsteroid);
 
       // Create particles for explosion at impact position
-      const particleCount = 200;
+      const particleCount = 125;
       const particles = new THREE.Group(); // Group to hold particles
       const coneAngle = Math.PI / 3; // Angle for cone shape
       const oppositeDirection = asteroidDirection.clone().negate(); // Calculate opposite direction

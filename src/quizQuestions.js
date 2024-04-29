@@ -5,6 +5,57 @@ export const quizData = [
         options: ["hundreds", "billions", "one", "millions"],
         correctAnswer: "one"
     },
+    // Additions start here
+    {
+        question: "What is the difference between an open cluster and a globular cluster?",
+        options: [
+            "Open clusters are younger and contain fewer stars than globular clusters.",
+            "Globular clusters are younger and contain fewer stars than open clusters.",
+            "Open clusters are older and contain more stars than globular clusters.",
+            "Globular clusters are older and contain more stars than open clusters."
+        ],
+        correctAnswer: "Globular clusters are older and contain more stars than open clusters."
+    },
+    {
+        question: "Explain the concept of stellar parallax and its significance in astronomy.",
+        options: [
+            "Stellar parallax is the apparent shift in the position of a star due to Earth's orbit and is used to measure distances to nearby stars.",
+            "Stellar parallax is the absolute position of a star in the sky and is used to measure its brightness.",
+            "Stellar parallax is the apparent change in a star's color and is used to determine its temperature.",
+            "Stellar parallax is the measurement of a star's gravitational pull and is used to classify its size."
+        ],
+        correctAnswer: "Stellar parallax is the apparent shift in the position of a star due to Earth's orbit and is used to measure distances to nearby stars."
+    },
+    {
+        question: "What are exoplanets, and how are they detected?",
+        options: [
+            "Exoplanets are planets within our solar system, and they are detected using telescopes.",
+            "Exoplanets are planets outside our solar system, and they are detected through changes in a star's brightness or by direct imaging.",
+            "Exoplanets are moons orbiting other planets, and they are detected through gravitational lensing.",
+            "Exoplanets are stars that emit their own light, and they are detected by their spectral signatures."
+        ],
+        correctAnswer: "Exoplanets are planets outside our solar system, and they are detected through changes in a star's brightness or by direct imaging."
+    },
+    {
+        question: "Describe the concept of blackbody radiation and its relevance to understanding the temperature of stars.",
+        options: [
+            "Blackbody radiation is the emission of visible light by stars, and it helps determine their distance.",
+            "Blackbody radiation is the absorption of light by stars, and it helps determine their chemical composition.",
+            "Blackbody radiation is the emission of electromagnetic radiation by any object with a temperature above absolute zero, and it helps determine the temperature and color of stars.",
+            "Blackbody radiation is the reflection of light by stars, and it helps determine their size."
+        ],
+        correctAnswer: "Blackbody radiation is the emission of electromagnetic radiation by any object with a temperature above absolute zero, and it helps determine the temperature and color of stars."
+    },
+    {
+        question: "Discuss the concept of redshift and blueshift in the context of the Doppler effect and its application in studying the motion of celestial objects.",
+        options: [
+            "Redshift is the stretching of light waves, indicating an object moving away, while blueshift is the compression of light waves, indicating an object moving closer. The Doppler effect is used to measure the speed and direction of celestial objects.",
+            "Redshift is the compression of light waves, indicating an object moving away, while blueshift is the stretching of light waves, indicating an object moving closer. The Doppler effect is used to measure the speed and direction of celestial objects.",
+            "Redshift is the bending of light waves, indicating an object's gravitational pull, while blueshift is the reflection of light waves, indicating an object's size. The Doppler effect is used to measure the mass of celestial objects.",
+            "Redshift is the stretching of light waves, indicating an object moving closer, while blueshift is the compression of light waves, indicating an object moving away. The Doppler effect is used to measure the distance to celestial objects."
+        ],
+        correctAnswer: "Redshift is the stretching of light waves, indicating an object moving away, while blueshift is the compression of light waves, indicating an object moving closer. The Doppler effect is used to measure the speed and direction of celestial objects."
+    },
     {
         question: "The day when the Sun takes the longest to go from sunrise to sunset is called the",
         options: ["Summer solstice", "Vernal equinox", "Autumnal equinox", "Winter solstice"],
